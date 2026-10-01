@@ -1,0 +1,17 @@
+# Raw and Processed Data Files
+raw_data/
+data/*.rds
+data/*.gz
+data/*.txt
+data/*.csv
+
+# R and System Artifacts
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
