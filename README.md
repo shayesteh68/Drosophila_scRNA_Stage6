@@ -48,7 +48,7 @@ The analysis follows standard best-practice steps for droplet-based single-cell 
 Raw Count Matrix
        |
        v
-Quality Control & Filtering (Mito fraction < 10%, >= 300 genes/cell, doublet screening)
+Quality Control & Filtering (mitochondrial fraction < 5%, 500-6,000 genes/cell, min.cells = 3)
        |
        v
 Log-Normalization & Highly Variable Gene Selection (2,000 HVGs; vst method)
@@ -186,3 +186,22 @@ A detailed accompanying document - **Single-Cell Transcriptomic Atlas of Stage 6
 **Narges Shayesteh, MSc**  
 *Computational Biology & Bioinformatics Specialist*  
 Focus: Single-cell transcriptomics, RNA-seq, and developmental bioinformatics.
+
+## Data Availability & Reproducibility
+
+Raw count matrices are not included in this repository due to file size. The pipeline expects the input file `GSE95025_high_quality_cells_digital_expression.txt.gz` (GEO accession GSE95025; Karaiskos et al., Science 2017) to be placed in a `raw_data/` directory at the project root.
+
+Paths are defined at the top of `scripts/01_load_and_qc.R` and should be pointed to your local project directory before running:
+
+project_dir <- "/path/to/your/project"
+raw_data_path <- file.path(project_dir, "raw_data", "GSE95025_high_quality_cells_digital_expression.txt.gz")
+fig_dir <- file.path(project_dir, "results", "figures")
+data_out_dir <- file.path(project_dir, "data")
+
+Scripts are numbered `01` to `04` and are intended to be run in that order; the `results/figures/`, `results/tables/`, and `data/` directories must exist before execution.
+
+## Note on Quality-Control Parameters
+
+The mitochondrial gene pattern (`pattern = "^mt:"`) in `scripts/01_load_and_qc.R` follows the `mt:` gene-name prefix used by the embryonic annotation of the source dataset (GSE95025). Users working with a different reference annotation should verify that this prefix matches their GTF/GFF file, so that `percent.mt` is computed correctly.
+
+Cell-level filters applied by the current pipeline are `nFeature_RNA` between 500 and 6,000, `percent.mt` below 5, and `min.cells = 3` at object creation.
