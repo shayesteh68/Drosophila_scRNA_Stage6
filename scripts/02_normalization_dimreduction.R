@@ -11,13 +11,21 @@ suppressPackageStartupMessages({
 })
 
 # 1. Define Paths
-project_dir <- "."
+script_args <- commandArgs(trailingOnly = FALSE)
+script_file_arg <- grep("^--file=", script_args, value = TRUE)
+project_dir <- if (length(script_file_arg)) {
+  normalizePath(file.path(dirname(sub("^--file=", "", script_file_arg[1])), ".."))
+} else {
+  normalizePath(getwd())
+}
 input_rds <- file.path(project_dir, "data", "01_seurat_qc_filtered.rds")
 fig_dir <- file.path(project_dir, "results", "figures")
 data_out_dir <- file.path(project_dir, "data")
 
 message("==> Step 1: Loading QC-filtered Seurat object...")
 seurat_obj <- readRDS(input_rds)
+
+set.seed(42)
 
 # 2. Normalization
 message("==> Step 2: Normalizing expression counts...")
@@ -36,9 +44,8 @@ hvg_plot2 <- LabelPoints(plot = hvg_plot1, points = top10_genes, repel = TRUE, m
 ggsave(filename = file.path(fig_dir, "02_variable_genes_plot.png"), plot = hvg_plot2, width = 9, height = 5, dpi = 300)
 
 # 4. Scaling
-message("==> Step 4: Scaling data across all features...")
-all_genes <- rownames(seurat_obj)
-seurat_obj <- ScaleData(seurat_obj, features = all_genes, verbose = FALSE)
+message("==> Step 4: Scaling variable features for PCA...")
+seurat_obj <- ScaleData(seurat_obj, features = VariableFeatures(seurat_obj), verbose = FALSE)
 
 # 5. Principal Component Analysis (PCA)
 message("==> Step 5: Running PCA...")

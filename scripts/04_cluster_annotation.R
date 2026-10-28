@@ -10,7 +10,13 @@ suppressPackageStartupMessages({
 })
 
 # 1. Paths
-project_dir <- "."
+script_args <- commandArgs(trailingOnly = FALSE)
+script_file_arg <- grep("^--file=", script_args, value = TRUE)
+project_dir <- if (length(script_file_arg)) {
+  normalizePath(file.path(dirname(sub("^--file=", "", script_file_arg[1])), ".."))
+} else {
+  normalizePath(getwd())
+}
 input_rds <- file.path(project_dir, "data", "02_seurat_dimreduced.rds")
 output_rds <- file.path(project_dir, "data", "03_seurat_annotated.rds")
 fig_dir <- file.path(project_dir, "results", "figures")
@@ -23,27 +29,38 @@ seurat_obj <- readRDS(input_rds)
 cluster_annotations <- c(
   "0" = "Mesoderm (twi+/sna+)",
   "1" = "Neurogenic Ectoderm (vnd+/SoxN+)",
-  "2" = "Lateral Trunk Ectoderm",
+  "2" = "Ectoderm (lineage unresolved; provisional)",
   "3" = "Anterior / Head (toy+/tll+)",
   "4" = "Lateral Ectoderm (sog+)",
   "5" = "Amnioserosa / Dorsal (zen+/zen2+)",
   "6" = "Mesectoderm / Midline (sim+)"
 )
 
+observed_clusters <- unique(as.character(Idents(seurat_obj)))
+if (!setequal(observed_clusters, names(cluster_annotations))) {
+  stop("Current cluster IDs differ from the historical map. Review markers and update cluster_annotations.")
+}
+dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(tbl_dir, recursive = TRUE, showWarnings = FALSE)
 message("==> Step 2: Annotating embryonic cell populations...")
 seurat_obj <- RenameIdents(seurat_obj, cluster_annotations)
 seurat_obj$cell_type <- Idents(seurat_obj)
+seurat_obj$annotation_status <- "provisional_marker_reviewed_historical_map"
+warning("Cluster IDs alone do not validate these historical labels; review current marker evidence.")
 
 # 3. Custom Color Palette for Embryonic Germ Layers
 embryo_cols <- c(
   "Mesoderm (twi+/sna+)"            = "#E64B35", # Red / Ventral
   "Neurogenic Ectoderm (vnd+/SoxN+)"= "#4DBBD5", # Blue / Ventral-Lateral
-  "Lateral Trunk Ectoderm"          = "#00A087", # Teal / Lateral
+  "Ectoderm (lineage unresolved; provisional)" = "#00A087", # Teal / Lateral
   "Anterior / Head (toy+/tll+)"     = "#3C5488", # Dark Blue / Anterior
   "Lateral Ectoderm (sog+)"         = "#F39B7F", # Coral / BMP gradient
   "Amnioserosa / Dorsal (zen+/zen2+)"= "#8491B4", # Lavender / Dorsal-most
   "Mesectoderm / Midline (sim+)"    = "#91D1C2"  # Light Teal / Midline
 )
+if (!setequal(names(embryo_cols), unname(cluster_annotations))) {
+  stop("The annotation palette does not match the cluster annotation labels.")
+}
 
 # 4. Publication-Ready UMAP Plot
 message("==> Step 3: Generating Annotated Publication UMAP...")
@@ -78,7 +95,7 @@ prop_plot <- ggplot(prop_df, aes(x = reorder(CellType, Percentage), y = Percenta
   scale_fill_manual(values = embryo_cols) +
   theme_minimal() +
   labs(
-    title = "Embryonic Domain Proportions (1,297 High-Quality Cells)",
+    title = paste0("Embryonic Domain Proportions (", format(ncol(seurat_obj), big.mark = ","), " cells)"),
     x = "",
     y = "Percentage of Total Cells (%)"
   ) +

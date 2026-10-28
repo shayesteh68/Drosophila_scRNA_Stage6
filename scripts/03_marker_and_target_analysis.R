@@ -8,10 +8,17 @@ suppressPackageStartupMessages({
   library(Seurat)
   library(ggplot2)
   library(dplyr)
+  library(patchwork)
 })
 
 # 1. Define Paths
-project_dir <- "."
+script_args <- commandArgs(trailingOnly = FALSE)
+script_file_arg <- grep("^--file=", script_args, value = TRUE)
+project_dir <- if (length(script_file_arg)) {
+  normalizePath(file.path(dirname(sub("^--file=", "", script_file_arg[1])), ".."))
+} else {
+  normalizePath(getwd())
+}
 input_rds <- file.path(project_dir, "data", "02_seurat_dimreduced.rds")
 fig_dir <- file.path(project_dir, "results", "figures")
 tbl_dir <- file.path(project_dir, "results", "tables")
@@ -23,7 +30,7 @@ message("==> Step 1: Loading dimreduced Seurat object...")
 seurat_obj <- readRDS(input_rds)
 
 # 2. Identify All Cluster Markers
-message("==> Step 2: Finding differentially expressed markers for all 7 clusters...")
+message("==> Step 2: Finding markers for ", length(levels(Idents(seurat_obj))), " clusters...")
 cluster_markers <- FindAllMarkers(
   seurat_obj,
   only.pos = TRUE,
@@ -38,6 +45,8 @@ markers_out_file <- file.path(tbl_dir, "all_cluster_markers_stage6.csv")
 write.csv(cluster_markers, file = markers_out_file, row.names = FALSE)
 message(sprintf("Found %d marker records. Saved to: %s", nrow(cluster_markers), markers_out_file))
 
+if (!nrow(cluster_markers)) stop("No cluster markers passed the configured thresholds.")
+
 # Extract Top 10 Markers per Cluster
 top10_per_cluster <- cluster_markers %>%
   group_by(cluster) %>%
@@ -50,6 +59,7 @@ write.csv(top10_per_cluster, file = file.path(tbl_dir, "top10_cluster_markers.cs
 potential_targets <- c("Src42A", "arm", "zip", "shot", "twi", "sna", "zen", "sim", "rho", "bkg", "Cka", "shg")
 available_targets <- intersect(potential_targets, rownames(seurat_obj))
 
+if (!length(available_targets)) stop("None of the configured target genes are present in the matrix.")
 message(sprintf("Target genes identified in dataset: %s", paste(available_targets, collapse = ", ")))
 
 # 4. Visualization: Feature Plots (UMAP localization)
@@ -87,6 +97,7 @@ top5_per_cluster <- cluster_markers %>%
   group_by(cluster) %>%
   slice_max(n = 5, order_by = avg_log2FC)
 
+seurat_obj <- ScaleData(seurat_obj, features = unique(top5_per_cluster$gene), verbose = FALSE)
 heatmap_plot <- DoHeatmap(
   seurat_obj,
   features = unique(top5_per_cluster$gene),

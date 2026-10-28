@@ -9,10 +9,17 @@ suppressPackageStartupMessages({
   library(Seurat)
   library(Matrix)
   library(ggplot2)
+  library(patchwork)
 })
 
 # 1. Define Paths
-project_dir <- "."
+script_args <- commandArgs(trailingOnly = FALSE)
+script_file_arg <- grep("^--file=", script_args, value = TRUE)
+project_dir <- if (length(script_file_arg)) {
+  normalizePath(file.path(dirname(sub("^--file=", "", script_file_arg[1])), ".."))
+} else {
+  normalizePath(getwd())
+}
 raw_data_path <- file.path(project_dir, "raw_data", "GSE95025_high_quality_cells_digital_expression.txt.gz")
 fig_dir <- file.path(project_dir, "results", "figures")
 data_out_dir <- file.path(project_dir, "data")
@@ -27,7 +34,13 @@ counts_raw <- read.table(con, header = TRUE, sep = "\t", row.names = 1, check.na
 close(con)
 
 counts_matrix <- as.matrix(counts_raw)
+if (!is.numeric(counts_matrix) || anyNA(counts_matrix) ||
+    any(!is.finite(counts_matrix)) || any(counts_matrix < 0) ||
+    any(counts_matrix != floor(counts_matrix)) || anyDuplicated(colnames(counts_matrix))) {
+  stop("The input must contain non-negative integer counts and unique cell names.")
+}
 sparse_counts <- as(counts_matrix, "CsparseMatrix")
+rm(counts_raw, counts_matrix)
 
 message(sprintf("Raw matrix loaded: %d genes across %d cells.", nrow(sparse_counts), ncol(sparse_counts)))
 

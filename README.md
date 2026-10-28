@@ -4,7 +4,7 @@
 [![R: >=4.3.0](https://img.shields.io/badge/R-%3E%3D4.3.0-blue.svg)](https://www.r-project.org/)
 [![Seurat: v5](https://img.shields.io/badge/Seurat-v5.0.1-brightgreen.svg)](https://satijalab.org/seurat/)
 
-An end-to-end, fully reproducible single-cell RNA sequencing (scRNA-seq) workflow analyzing *Drosophila melanogaster* embryonic development at **Stage 6**. Implemented using **Seurat v5**, this project covers quality control, variance stabilization, dimensionality reduction, unsupervised clustering, differential expression, and lineage annotation with stage-specific developmental markers.
+A single-cell RNA sequencing (scRNA-seq) workflow analyzing *Drosophila melanogaster* embryonic development at **Stage 6**. Implemented using **Seurat v5**, this project covers quality control, log normalization, dimensionality reduction, unsupervised clustering, differential expression, and lineage annotation with stage-specific developmental markers.
 
 ---
 
@@ -21,32 +21,20 @@ An end-to-end, fully reproducible single-cell RNA sequencing (scRNA-seq) workflo
 
 ```text
 Drosophila_scRNA_Stage6/
-├── .gitignore
-├── LICENSE
-├── README.md
-├── environment.yml
-├── scripts/
-│   ├── 01_load_and_qc.R
-│   ├── 02_normalization_dimreduction.R
-│   ├── 03_marker_and_target_analysis.R
-│   └── 04_cluster_annotation.R
-└── results/
-    ├── figures/
-    │   ├── 01_qc_metrics_prefilter.png
-    │   ├── 01_qc_scatter_prefilter.png
-    │   ├── 02_variable_genes_plot.png
-    │   ├── 03_pca_dimension_plot.png
-    │   ├── 04_pca_elbow_plot.png
-    │   ├── 05_umap_clusters.png
-    │   ├── 06_target_genes_featureplot.png
-    │   ├── 07_morphogenetic_targets_dotplot.png
-    │   ├── 08_top_markers_heatmap.png
-    │   ├── 09_annotated_embryo_umap.png
-    │   └── 10_cell_type_proportions.png
-    └── tables/
-        ├── all_cluster_markers_stage6.csv
-        ├── embryonic_cell_proportions.csv
-        └── top10_cluster_markers.csv
++-- .gitignore
++-- LICENSE
++-- README.md
++-- environment.yml
++-- scripts/
+|   +-- 00_download_data.R
+|   +-- 01_load_and_qc.R
+|   +-- 02_normalization_dimreduction.R
+|   +-- 03_marker_and_target_analysis.R
+|   +-- 04_cluster_annotation.R
++-- raw_data/ (downloaded input; ignored by Git)
++-- results/ (historical snapshots; regenerate before citing)
+    +-- figures/
+    +-- tables/
 ```
 
 ---
@@ -58,7 +46,7 @@ The analysis is modularized into four consecutive steps located in `scripts/`:
 ### 1. Data Ingestion & Quality Control (`scripts/01_load_and_qc.R`)
 - Loads count matrices and constructs Seurat objects.
 - Calculates quality metrics: detected features (`nFeature_RNA`), total transcripts (`nCount_RNA`), and mitochondrial percentage (`percent.mt`).
-- Applies QC filters to remove low-quality droplets and potential doublets.
+- Applies feature-count and mitochondrial-percentage filters. No dedicated doublet classifier is implemented.
 - Outputs: `01_qc_metrics_prefilter.png` and `01_qc_scatter_prefilter.png`.
 
 ### 2. Normalization & Dimensionality Reduction (`scripts/02_normalization_dimreduction.R`)
@@ -73,7 +61,7 @@ The analysis is modularized into four consecutive steps located in `scripts/`:
 - Outputs: `06_target_genes_featureplot.png`, `07_morphogenetic_targets_dotplot.png`, `08_top_markers_heatmap.png`, and marker summary tables (`all_cluster_markers_stage6.csv`, `top10_cluster_markers.csv`).
 
 ### 4. Embryonic Cluster Annotation (`scripts/04_cluster_annotation.R`)
-- Assigns definitive developmental cell-type identities using canonical Stage 6 markers.
+- Applies provisional historical labels for cluster IDs 0 through 6. Review the current marker tables before accepting these biological identities; matching numeric cluster IDs alone is insufficient.
 - Computes cell-type population frequencies across clusters.
 - Outputs: `09_annotated_embryo_umap.png`, `10_cell_type_proportions.png`, and `embryonic_cell_proportions.csv`.
 
@@ -100,6 +88,7 @@ conda activate drosophila-scrna-env
 All analysis scripts are executed from the repository root:
 
 ```bash
+Rscript scripts/00_download_data.R
 Rscript scripts/01_load_and_qc.R
 Rscript scripts/02_normalization_dimreduction.R
 Rscript scripts/03_marker_and_target_analysis.R
@@ -131,7 +120,7 @@ Rscript scripts/04_cluster_annotation.R
 - **scales**
 - **readr**
 
-All packages and version pins are defined in `environment.yml`.
+The core R and Seurat versions are pinned in environment.yml; other R dependencies are resolved by Conda and may change over time.
 
 ---
 
