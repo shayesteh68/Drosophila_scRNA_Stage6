@@ -1,0 +1,7 @@
+"cluster_id","cell_type","annotation_status","marker_evidence","n_cells"
+"0","Mesoderm","provisional_marker_supported","twi, sna, and tin are enriched; zfh1 and stumps are top markers",394
+"1","Neuroectoderm","provisional_marker_supported","SoxN, ths, and sog are enriched; ths and SoxN are top markers",327
+"2","Ectoderm, subtype unresolved","lineage_unresolved","SoxN and sog are detected, but cluster-specific lineage markers are inconclusive",287
+"3","Anterior / Head","provisional_marker_supported","toy and tll are enriched; both are among top cluster markers",112
+"4","Amnioserosa / Dorsal","provisional_marker_supported","zen and zen2 are strongly enriched and are top cluster markers",89
+"5","Mixed lineage, unresolved","mixed_marker_state_unresolved","sog, SoxN, twi, and sna co-occur; mixed lineage signature remains unresolved",88

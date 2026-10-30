@@ -4,7 +4,7 @@
 [![R: 4.4.3](https://img.shields.io/badge/R-4.4.3-blue.svg)](https://www.r-project.org/)
 [![Seurat: v5.5.0](https://img.shields.io/badge/Seurat-v5.5.0-brightgreen.svg)](https://satijalab.org/seurat/)
 
-A single-cell RNA sequencing (scRNA-seq) workflow analyzing *Drosophila melanogaster* embryonic development at **Stage 6**. Implemented using **Seurat v5**, this project covers quality control, log normalization, dimensionality reduction, unsupervised clustering, differential expression, and lineage annotation with stage-specific developmental markers.
+A single-cell RNA sequencing (scRNA-seq) workflow analyzing *Drosophila melanogaster* embryonic development at **Stage 6**. Implemented using **Seurat v5**, this project covers quality control, log normalization, dimensionality reduction, unsupervised clustering, cluster-marker discovery, and provisional lineage annotation with developmental markers.
 
 ---
 
@@ -32,7 +32,7 @@ Drosophila_scRNA_Stage6/
 |   +-- 03_marker_and_target_analysis.R
 |   +-- 04_cluster_annotation.R
 +-- raw_data/ (downloaded input; ignored by Git)
-+-- results/ (historical snapshots; regenerate before citing)
++-- results/ (outputs from the audited run; regenerate if inputs or parameters change)
     +-- figures/
     +-- tables/
 ```
@@ -64,6 +64,17 @@ The analysis is modularized into four consecutive steps located in `scripts/`:
 - Requires the exact current cluster IDs to match the marker-reviewed map. The audited environment produces clusters 0 through 5; cluster 2 has an unresolved ectodermal subtype and cluster 5 has a mixed marker state, so both remain explicitly unresolved.
 - Computes cell-type population frequencies across clusters.
 - Outputs: `09_annotated_embryo_umap.png`, `10_cell_type_proportions.png`, `embryonic_cell_proportions.csv`, and `cluster_annotation_evidence.csv`.
+
+The audited run retained 1,297 cells across six clusters. Four cluster labels are provisional marker-supported annotations; clusters 2 and 5 remain unresolved rather than being assigned unsupported identities.
+
+| Cluster | Cells | Audited label | Evidence status |
+|---:|---:|---|---|
+| 0 | 394 | Mesoderm | Provisional, marker-supported |
+| 1 | 327 | Neuroectoderm | Provisional, marker-supported |
+| 2 | 287 | Ectoderm, subtype unresolved | Unresolved |
+| 3 | 112 | Anterior / Head | Provisional, marker-supported |
+| 4 | 89 | Amnioserosa / Dorsal | Provisional, marker-supported |
+| 5 | 88 | Mixed lineage, unresolved | Unresolved |
 
 ---
 
