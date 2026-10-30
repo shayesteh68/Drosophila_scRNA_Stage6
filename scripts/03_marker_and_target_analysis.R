@@ -103,7 +103,10 @@ heatmap_plot <- DoHeatmap(
   features = unique(top5_per_cluster$gene),
   size = 3.5,
   angle = 45
-) + NoLegend() + ggtitle("Top 5 Marker Genes per Embryonic Cluster")
+) +
+  ggtitle("Top 5 Marker Genes per Embryonic Cluster") +
+  labs(fill = "Scaled expression") +
+  theme(legend.position = "right")
 
 ggsave(filename = file.path(fig_dir, "08_top_markers_heatmap.png"), plot = heatmap_plot, width = 11, height = 8, dpi = 300)
 

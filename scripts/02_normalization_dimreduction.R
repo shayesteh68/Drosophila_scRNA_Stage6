@@ -49,7 +49,12 @@ seurat_obj <- ScaleData(seurat_obj, features = VariableFeatures(seurat_obj), ver
 
 # 5. Principal Component Analysis (PCA)
 message("==> Step 5: Running PCA...")
-seurat_obj <- RunPCA(seurat_obj, features = VariableFeatures(object = seurat_obj), verbose = FALSE)
+seurat_obj <- RunPCA(
+  seurat_obj,
+  features = VariableFeatures(object = seurat_obj),
+  seed.use = 42,
+  verbose = FALSE
+)
 
 # Save PCA Diagnostics
 pca_dim_plot <- DimPlot(seurat_obj, reduction = "pca", pt.size = 1.2) + ggtitle("PCA - Drosophila Embryo (Stage 6)")
@@ -64,8 +69,8 @@ dims_to_use <- 1:15
 message(sprintf("==> Step 6: Constructing SNN Graph and Running UMAP (Dims: 1 to %d)...", max(dims_to_use)))
 
 seurat_obj <- FindNeighbors(seurat_obj, dims = dims_to_use, verbose = FALSE)
-seurat_obj <- FindClusters(seurat_obj, resolution = 0.6, verbose = FALSE)
-seurat_obj <- RunUMAP(seurat_obj, dims = dims_to_use, verbose = FALSE)
+seurat_obj <- FindClusters(seurat_obj, resolution = 0.6, random.seed = 42, verbose = FALSE)
+seurat_obj <- RunUMAP(seurat_obj, dims = dims_to_use, seed.use = 42, verbose = FALSE)
 
 # 7. Generate UMAP Visualizations
 message("==> Step 7: Saving UMAP Visualizations...")

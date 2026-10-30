@@ -1,13 +1,11 @@
 name: drosophila-scrna-env
 channels:
   - conda-forge
-  - bioconda
-  - defaults
 dependencies:
-  - r-base=4.3.2
-  - r-seurat=5.0.1
+  - r-base=4.4.3
+  - r-seurat=5.5.0
   - r-dplyr
-  - r-ggplot2
+  - r-ggplot2=4.0.3
   - r-patchwork
   - r-cowplot
   - r-matrix

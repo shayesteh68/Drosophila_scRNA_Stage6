@@ -1,8 +1,8 @@
 # Drosophila Melanogaster Stage 6 Embryogenesis scRNA-seq Analysis
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![R: >=4.3.0](https://img.shields.io/badge/R-%3E%3D4.3.0-blue.svg)](https://www.r-project.org/)
-[![Seurat: v5](https://img.shields.io/badge/Seurat-v5.0.1-brightgreen.svg)](https://satijalab.org/seurat/)
+[![R: 4.4.3](https://img.shields.io/badge/R-4.4.3-blue.svg)](https://www.r-project.org/)
+[![Seurat: v5.5.0](https://img.shields.io/badge/Seurat-v5.5.0-brightgreen.svg)](https://satijalab.org/seurat/)
 
 A single-cell RNA sequencing (scRNA-seq) workflow analyzing *Drosophila melanogaster* embryonic development at **Stage 6**. Implemented using **Seurat v5**, this project covers quality control, log normalization, dimensionality reduction, unsupervised clustering, differential expression, and lineage annotation with stage-specific developmental markers.
 
@@ -45,8 +45,8 @@ The analysis is modularized into four consecutive steps located in `scripts/`:
 
 ### 1. Data Ingestion & Quality Control (`scripts/01_load_and_qc.R`)
 - Loads count matrices and constructs Seurat objects.
-- Calculates quality metrics: detected features (`nFeature_RNA`), total transcripts (`nCount_RNA`), and mitochondrial percentage (`percent.mt`).
-- Applies feature-count and mitochondrial-percentage filters. No dedicated doublet classifier is implemented.
+- Calculates detected features (`nFeature_RNA`), total transcripts (`nCount_RNA`), and ribosomal percentage. It calculates mitochondrial percentage only when mitochondrial genes are present in the input.
+- Applies feature-count filters and applies the mitochondrial-percentage filter only when that metric is available. The current GSE95025 matrix contains no genes matching the Drosophila mitochondrial prefix, so `percent.mt` is marked unavailable and the mitochondrial filter is skipped with a warning. No dedicated doublet classifier is implemented.
 - Outputs: `01_qc_metrics_prefilter.png` and `01_qc_scatter_prefilter.png`.
 
 ### 2. Normalization & Dimensionality Reduction (`scripts/02_normalization_dimreduction.R`)
@@ -56,14 +56,14 @@ The analysis is modularized into four consecutive steps located in `scripts/`:
 - Outputs: `02_variable_genes_plot.png`, `03_pca_dimension_plot.png`, `04_pca_elbow_plot.png`, and `05_umap_clusters.png`.
 
 ### 3. Marker Discovery & Target Analysis (`scripts/03_marker_and_target_analysis.R`)
-- Performs differential gene expression (Wilcoxon rank-sum test) via `FindAllMarkers`.
+- Discovers within-cluster marker genes with Seurat's Wilcoxon rank-sum test via `FindAllMarkers`. These cell-level marker p-values are exploratory and do not estimate replicate-level or condition effects.
 - Profiles expression patterns of key morphogenetic and lineage target genes.
 - Outputs: `06_target_genes_featureplot.png`, `07_morphogenetic_targets_dotplot.png`, `08_top_markers_heatmap.png`, and marker summary tables (`all_cluster_markers_stage6.csv`, `top10_cluster_markers.csv`).
 
 ### 4. Embryonic Cluster Annotation (`scripts/04_cluster_annotation.R`)
-- Applies provisional historical labels for cluster IDs 0 through 6. Review the current marker tables before accepting these biological identities; matching numeric cluster IDs alone is insufficient.
+- Requires the exact current cluster IDs to match the marker-reviewed map. The audited environment produces clusters 0 through 5; cluster 2 has an unresolved ectodermal subtype and cluster 5 has a mixed marker state, so both remain explicitly unresolved.
 - Computes cell-type population frequencies across clusters.
-- Outputs: `09_annotated_embryo_umap.png`, `10_cell_type_proportions.png`, and `embryonic_cell_proportions.csv`.
+- Outputs: `09_annotated_embryo_umap.png`, `10_cell_type_proportions.png`, `embryonic_cell_proportions.csv`, and `cluster_annotation_evidence.csv`.
 
 ---
 
@@ -78,6 +78,13 @@ cd Drosophila_scRNA_Stage6
 ### 2. Create and Activate the Conda Environment
 ```bash
 conda env create -f environment.yml
+conda activate drosophila-scrna-env
+```
+
+For an exact Linux x86_64 environment used in the audit, create the environment from the lock file instead:
+
+```bash
+conda create -n drosophila-scrna-env --file environment-linux-64.lock.txt
 conda activate drosophila-scrna-env
 ```
 
@@ -110,17 +117,19 @@ Rscript scripts/04_cluster_annotation.R
 
 ## Dependencies
 
-- **R** >= 4.3.0
-- **Seurat** >= 5.0.1
+- **R** 4.4.3
+- **Seurat** 5.5.0
+- **ggplot2** 4.0.3
 - **Matrix**
 - **dplyr**
-- **ggplot2**
 - **patchwork**
 - **cowplot**
 - **scales**
 - **readr**
 
-The core R and Seurat versions are pinned in environment.yml; other R dependencies are resolved by Conda and may change over time.
+R, Seurat, and ggplot2 are pinned in environment.yml. Seurat 5.5.0 is used with ggplot2 4.0.3; earlier Seurat releases can fail in plotting functions under ggplot2 4.x ([upstream compatibility issue](https://github.com/satijalab/seurat/issues/10188)). Other R dependencies may change over time when the YAML is resolved. Use the lock file to reproduce the exact audited Linux x86_64 package set.
+
+The workflow reads one expression matrix and has no sample-level replicate design. Cluster marker p-values support exploratory cell annotation only; they are not independent-replicate evidence.
 
 ---
 

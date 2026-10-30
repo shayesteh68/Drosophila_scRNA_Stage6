@@ -54,36 +54,52 @@ seurat_obj <- CreateSeuratObject(
 )
 
 # 3. Calculate Mitochondrial and Ribosomal QC Metrics
-# In Drosophila (FlyBase annotation), mitochondrial genes start with 'mt:'
-seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^mt:")
+# In Drosophila (FlyBase annotation), mitochondrial genes start with 'mt:'.
+mt_features <- grep("^mt:", rownames(seurat_obj), value = TRUE, ignore.case = TRUE)
+mito_qc_available <- length(mt_features) > 0L
+if (mito_qc_available) {
+  seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, features = mt_features)
+} else {
+  seurat_obj[["percent.mt"]] <- rep(NA_real_, ncol(seurat_obj))
+  warning("No mitochondrial features were found; percent.mt is unavailable and the mitochondrial filter will be skipped.")
+}
 # Ribosomal protein genes in Drosophila typically start with RpL or RpS
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^Rp[LS]")
 
 # 4. Generate Pre-filter QC Plots
 message("==> Step 3: Generating QC Violin Plots...")
+qc_features <- c("nFeature_RNA", "nCount_RNA", "percent.ribo")
+if (mito_qc_available) qc_features <- c(qc_features, "percent.mt")
 qc_vln <- VlnPlot(
   seurat_obj,
-  features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo"),
-  ncol = 4,
+  features = qc_features,
+  ncol = length(qc_features),
   pt.size = 0.1
 ) & theme(plot.title = element_text(size = 11, face = "bold"))
 
 ggsave(filename = file.path(fig_dir, "01_qc_metrics_prefilter.png"), plot = qc_vln, width = 12, height = 4, dpi = 300)
 
 # QC Scatter Plots
-scatter1 <- FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
 scatter2 <- FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-qc_scatter <- scatter1 + scatter2
+if (mito_qc_available) {
+  scatter1 <- FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
+  qc_scatter <- scatter1 + scatter2
+} else {
+  qc_scatter <- scatter2
+}
 
 ggsave(filename = file.path(fig_dir, "01_qc_scatter_prefilter.png"), plot = qc_scatter, width = 10, height = 4, dpi = 300)
 
 # 5. Apply Stringent Filtering
 # Retain high-confidence embryonic cells
 message("==> Step 4: Filtering low quality cells...")
-seurat_filtered <- subset(
-  seurat_obj,
-  subset = nFeature_RNA >= 500 & nFeature_RNA <= 6000 & percent.mt < 5
-)
+cell_keep <- seurat_obj$nFeature_RNA >= 500 & seurat_obj$nFeature_RNA <= 6000
+if (mito_qc_available) {
+  cell_keep <- cell_keep & seurat_obj$percent.mt < 5
+} else {
+  message("Mitochondrial filtering skipped because this matrix has no mitochondrial genes.")
+}
+seurat_filtered <- subset(seurat_obj, cells = colnames(seurat_obj)[which(cell_keep)])
 
 message(sprintf("Cells before filtering: %d | Cells after filtering: %d", ncol(seurat_obj), ncol(seurat_filtered)))
 
