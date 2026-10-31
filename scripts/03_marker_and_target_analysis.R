@@ -1,7 +1,8 @@
 # ==============================================================================
 # Pipeline: Drosophila Embryogenesis Single-Cell Transcriptomics (Stage 6)
 # Script 03: Cluster Marker Identification & Morphogenetic/Cytoskeletal Profiling
-# Focus: Src42A, Adherens Junctions, and Cytoskeletal Remodeling (Muller Lab)
+# Focus: Src42A, adherens junctions, and cytoskeletal remodeling
+# Src42A is literature-informed by Chandran et al. (2023), DOI: 10.1242/dev.201119
 # ==============================================================================
 
 suppressPackageStartupMessages({
@@ -54,7 +55,7 @@ top10_per_cluster <- cluster_markers %>%
 
 write.csv(top10_per_cluster, file = file.path(tbl_dir, "top10_cluster_markers.csv"), row.names = FALSE)
 
-# 3. Muller Lab Target Genes: Cytoskeletal, Polarity, and Junctional Regulators
+# 3. Literature-informed candidate genes: cytoskeletal, polarity, and junctional regulators
 # Checking which target genes are present in the dataset matrix
 potential_targets <- c("Src42A", "arm", "zip", "shot", "twi", "sna", "zen", "sim", "rho", "bkg", "Cka", "shg")
 available_targets <- intersect(potential_targets, rownames(seurat_obj))
@@ -63,7 +64,7 @@ if (!length(available_targets)) stop("None of the configured target genes are pr
 message(sprintf("Target genes identified in dataset: %s", paste(available_targets, collapse = ", ")))
 
 # 4. Visualization: Feature Plots (UMAP localization)
-message("==> Step 3: Generating Spatial Feature Plots for Muller Lab Targets...")
+message("==> Step 3: Generating spatial feature plots for candidate morphogenetic targets...")
 feature_plot <- FeaturePlot(
   seurat_obj,
   features = available_targets[1:min(6, length(available_targets))],
@@ -110,4 +111,4 @@ heatmap_plot <- DoHeatmap(
 
 ggsave(filename = file.path(fig_dir, "08_top_markers_heatmap.png"), plot = heatmap_plot, width = 11, height = 8, dpi = 300)
 
-message("==> Step 6: Marker profiling and Muller targets analysis successfully completed!")
+message("==> Step 6: Marker profiling and candidate target-gene analysis successfully completed!")

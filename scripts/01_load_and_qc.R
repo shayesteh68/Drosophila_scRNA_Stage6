@@ -2,7 +2,7 @@
 # Pipeline: Drosophila Embryogenesis Single-Cell Transcriptomics (Stage 6)
 # Script 01: Data Ingestion, Quality Control, and Initial Filtering
 # Dataset: GEO GSE95025 (Karaiskos et al., Science 2017)
-# Target: Cytoskeletal & Morphogenetic Dynamics (Muller Lab Collaboration)
+# Scope: Independent expression analysis of a public Stage 6 dataset
 # ==============================================================================
 
 suppressPackageStartupMessages({
